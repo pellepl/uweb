@@ -84,7 +84,7 @@ UW_STREAM make_printf_stream(UW_STREAM str)
   return str;
 }
 
-static uweb_response uweb_response_fn(uweb_request_header *req, UW_STREAM *res, uweb_http_status *http_status, char *content_type) {
+static uweb_response uweb_response_fn(uweb_request_header *req, UW_STREAM *res, uweb_http_status *http_status, char *content_type, char **extra_headers) {
   *res = _response_stream;
   if (_response_chunk_bytes == 0) {
     return UWEB_OK;

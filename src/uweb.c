@@ -144,13 +144,14 @@ static void _uweb_request(UW_STREAM out, uweb_request_header *req) {
 
   char content_type[UWEB_MAX_CONTENT_TYPE_LEN];
   uweb_http_status http_status = S200_OK;
+  char *extra_headers = 0;
 
   strncpy(content_type, "text/html; charset=utf-8", UWEB_MAX_CONTENT_TYPE_LEN);
 
   uweb_response res = UWEB_OK;
   UW_STREAM response_stream;
   if (uweb.server_resp_f){
-    res = uweb.server_resp_f(req, &response_stream, &http_status, content_type);
+    res = uweb.server_resp_f(req, &response_stream, &http_status, content_type, &extra_headers);
   } else {
     _uweb_error(out, S501_NOT_IMPLEMENTED, ERR_HTTP_NOT_IMPL);
     return;
@@ -163,11 +164,13 @@ static void _uweb_request(UW_STREAM out, uweb_request_header *req) {
       "Server: "UWEB_SERVER_NAME"\n"
       "Content-Type: %s\n"
       "Content-Length: %i\n"
+      "%s"
       "Connection: close\n"
       "\n",
       UWEB_HTTP_STATUS_NUM[http_status], UWEB_HTTP_STATUS_STRING[http_status],
       content_type,
-      response_stream->total_sz);
+      response_stream->total_sz,
+      extra_headers ? extra_headers : "");
     if (req->method != HEAD) {
       _uweb_send_data(out, response_stream);
     }
@@ -177,10 +180,12 @@ static void _uweb_request(UW_STREAM out, uweb_request_header *req) {
       "HTTP/1.1 %i %s\n"
       "Server: "UWEB_SERVER_NAME"\n"
       "Content-Type: %s\n"
+      "%s"
       "Transfer-Encoding: chunked\n"
       "\n",
       UWEB_HTTP_STATUS_NUM[http_status], UWEB_HTTP_STATUS_STRING[http_status],
-      content_type);
+      content_type,
+      extra_headers ? extra_headers : "");
     if (req->method != HEAD) {
       uint32_t chunk_len;
       while (response_stream && (chunk_len = response_stream->avail_sz) > 0) {
@@ -188,7 +193,8 @@ static void _uweb_request(UW_STREAM out, uweb_request_header *req) {
         _uweb_send_data_fixed(out, response_stream, chunk_len);
         _uweb_sendf(out, "\r\n");
         uweb.req.chunk_nbr++;
-        (void)uweb.server_resp_f(req, &response_stream, &http_status, content_type); // from now on, we ignore response
+        (void)uweb.server_resp_f(req, &response_stream, &http_status,
+            content_type, &extra_headers); // from now on, we ignore response
       }
       _uweb_sendf(out, "0\r\n\r\n");
     }

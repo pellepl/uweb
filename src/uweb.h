@@ -152,15 +152,18 @@ typedef uweb_data_stream *UW_STREAM;
  * @param res - stream where to put data to be sent to client
  * @param http_status - defaults to S200_OK, but can be altered if necessary
  * @param content_type - defaults to text/plain, but can be altered if necessary
- * @return SERVER_OK if all data to send to client is filled in iobuf;
- *         SERVER_CHUNK if server wants to send partial data to client via iobuf.
+ * @param extra_headers - defaults to 0, user may put extra header strings here,
+ *                        must be newlined at end
+ * @return SERVER_OK if all data to send to client is filled in stream res;
+ *         SERVER_CHUNK if server wants to send partial data to client via stream res.
  *         If so, this function will be called repeatedly until user sends zero data.
  */
 typedef uweb_response (*uweb_response_f)(
     uweb_request_header *req,
     UW_STREAM *res,
     uweb_http_status *http_status,
-    char *content_type);
+    char *content_type,
+    char **extra_headers);
 
 /**
  * Called when there is a request containing data to the server.

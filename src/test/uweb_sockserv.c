@@ -115,7 +115,7 @@ UW_STREAM make_null_stream(UW_STREAM str)
   return str;
 }
 
-static uweb_response uweb_response_fn(uweb_request_header *req, UW_STREAM *res, uweb_http_status *http_status, char *content_type) {
+static uweb_response uweb_response_fn(uweb_request_header *req, UW_STREAM *res, uweb_http_status *http_status, char *content_type, char **extra_headers) {
   if (req->chunk_nbr == 0) {
     printf("opening %s\n", &req->resource[1]);
     char path[512];
@@ -137,6 +137,7 @@ static uweb_response uweb_response_fn(uweb_request_header *req, UW_STREAM *res, 
       make_file_stream(&res_stream, fd);
     } else {
       make_null_stream(&res_stream);
+      *http_status = S404_NOT_FOUND;
     }
   }
   *res = &res_stream;
