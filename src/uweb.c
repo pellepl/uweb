@@ -97,6 +97,16 @@ static void _uweb_send_data(UW_STREAM out, UW_STREAM data) {
   } // while tx
 }
 
+static void _uweb_send_data_fixed(UW_STREAM out, UW_STREAM data, int32_t len) {
+  while (len > 0) {
+    int32_t rlen = UWEB_TX_MAX_LEN < data->avail_sz ? UWEB_TX_MAX_LEN : data->avail_sz;
+    rlen = len < rlen ? len : rlen;
+    rlen = data->read(data, uweb.tx_buf, rlen);
+    out->write(out, uweb.tx_buf, rlen);
+    len -= rlen;
+  } // while tx
+}
+
 // request error response
 static void _uweb_error(UW_STREAM out, uweb_http_status http_status, const char *error_page) {
   _uweb_sendf(out,
@@ -175,7 +185,7 @@ static void _uweb_request(UW_STREAM out, uweb_request_header *req) {
       uint32_t chunk_len;
       while (response_stream && (chunk_len = response_stream->avail_sz) > 0) {
         _uweb_sendf(out, "%x; chunk %i\r\n", chunk_len, req->chunk_nbr);
-        _uweb_send_data(out, response_stream);
+        _uweb_send_data_fixed(out, response_stream, chunk_len);
         _uweb_sendf(out, "\r\n");
         uweb.req.chunk_nbr++;
         (void)uweb.server_resp_f(req, &response_stream, &http_status, content_type); // from now on, we ignore response
