@@ -116,28 +116,32 @@ typedef enum {
 #define UWEB_UNKNONW_SZ          -1
 
 typedef struct uweb_data_stream_s {
+  /**
+   * Stream user data, e.g. a pointer or a file descriptor.
+   */
   void *user;
   /**
    * Total size of the content describing the stream, or
-   * UWEB_UNKNONW_SZ.
+   * UWEB_UNKNONW_SZ. This is read only when client requests data
+   * and the server responds with unchunked data (i.e. knows the
+   * full response in bytes beforehand).
    */
   int32_t total_sz;
   /**
-   * Current available read size of the stream, in bytes.
+   * Current available read size of the stream, in bytes. When server
+   * responds with chunked data, the request is ended when avail_sz is
+   * zero.
    */
   int32_t avail_sz;
   /**
-   * Current available write size of the stream, in bytes.
-   */
-  int32_t capacity_sz;
-  /**
    * Reads from the stream into given buffer. Returns number of bytes
-   * read.
+   * read or negative for error. Make sure implementation updates
+   * avail_sz. If set to zero it will be a /dev/null stream.
    */
   int32_t (* read)(struct uweb_data_stream_s *stream, uint8_t *dst, uint32_t len);
   /**
    * Writes to the stream from given buffer. Returns number of bytes
-   * written.
+   * written or negative for error. If set to zero it will be a /dev/null stream.
    */
   int32_t (* write)(struct uweb_data_stream_s *stream, uint8_t *src, uint32_t len);
 } uweb_data_stream;

@@ -85,15 +85,15 @@ static void _uweb_sendf(UW_STREAM out, const char *str, ...) {
   int len = vsprintf((char *)uweb.tx_buf, str, arg_p);
   va_end(arg_p);
 
-  out->write(out, uweb.tx_buf, len);
+  if (out->write) out->write(out, uweb.tx_buf, len);
 }
 
 // send data to client
 static void _uweb_send_data(UW_STREAM out, UW_STREAM data) {
   while (data->avail_sz > 0) {
     int32_t rlen = UWEB_TX_MAX_LEN < data->avail_sz ? UWEB_TX_MAX_LEN : data->avail_sz;
-    rlen = data->read(data, uweb.tx_buf, rlen);
-    out->write(out, uweb.tx_buf, rlen);
+    rlen = data->read ? data->read(data, uweb.tx_buf, rlen) : 0;
+    if (out->write) out->write(out, uweb.tx_buf, rlen);
   } // while tx
 }
 
@@ -101,8 +101,8 @@ static void _uweb_send_data_fixed(UW_STREAM out, UW_STREAM data, int32_t len) {
   while (len > 0) {
     int32_t rlen = UWEB_TX_MAX_LEN < data->avail_sz ? UWEB_TX_MAX_LEN : data->avail_sz;
     rlen = len < rlen ? len : rlen;
-    rlen = data->read(data, uweb.tx_buf, rlen);
-    out->write(out, uweb.tx_buf, rlen);
+    rlen = data->read ? data->read(data, uweb.tx_buf, rlen) : 0;
+    if (out->write) out->write(out, uweb.tx_buf, rlen);
     len -= rlen;
   } // while tx
 }
@@ -433,7 +433,7 @@ void UWEB_parse(UW_STREAM in, UW_STREAM out) {
     case CHUNK_FOOTER:
     case HEADER_FIELDS: {
       uint8_t c;
-      int32_t res = in->read(in, &c, 1);
+      int32_t res = in->read ? in->read(in, &c, 1) : 0;
 //      printf("HEADER     :%02x %c\n",
 //             c, c <= ' ' ? '.' : c);
 
@@ -495,7 +495,7 @@ void UWEB_parse(UW_STREAM in, UW_STREAM out) {
         len = len < (int32_t)(uweb.chunk_len - uweb.received_content_len) ?
             len : (int32_t)(uweb.chunk_len - uweb.received_content_len);
       }
-      len = in->read(in, (uint8_t *)uweb.req_buf, len);
+      len = in->read ? in->read(in, (uint8_t *)uweb.req_buf, len) : 0;
       if (len <= 0) return;
 
       if (uweb.server_data_f) {
@@ -525,7 +525,7 @@ void UWEB_parse(UW_STREAM in, UW_STREAM out) {
     case MULTI_CONTENT_DATA: {
       uint8_t flush_boundary_buf = 0;
       uint8_t c;
-      int32_t res = in->read(in, &c, 1);
+      int32_t res = in->read ? in->read(in, &c, 1) : 0;
 
       if (res < 1) {
         return;

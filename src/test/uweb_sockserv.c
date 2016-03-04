@@ -54,7 +54,6 @@ static int32_t sockstr_write(UW_STREAM str, uint8_t *src, uint32_t len) {
 UW_STREAM make_socket_stream(UW_STREAM str, int sockfd)
 {
   str->total_sz = -1;
-  str->capacity_sz = 0;
   str->avail_sz = 256;
   str->user = (void *)((intptr_t)sockfd);
   str->read = sockstr_read;
@@ -91,7 +90,6 @@ UW_STREAM make_file_stream(UW_STREAM str, int fd)
   uint32_t sz = lseek(fd, 0L, SEEK_END);
   lseek(fd, 0L, SEEK_SET);
   str->total_sz = sz;
-  str->capacity_sz = 0;
   str->avail_sz = sz;
   str->user = (void *)((intptr_t)fd);
   str->read = filestr_read;
@@ -99,19 +97,12 @@ UW_STREAM make_file_stream(UW_STREAM str, int fd)
   return str;
 }
 
-static int32_t nullstr_read(UW_STREAM str, uint8_t *dst, uint32_t len) {
-  return 0;
-}
-static int32_t nullstr_write(UW_STREAM str, uint8_t *src, uint32_t len) {
-  return 0;
-}
 UW_STREAM make_null_stream(UW_STREAM str)
 {
   str->total_sz = 0;
-  str->capacity_sz = 0;
   str->avail_sz = 0;
-  str->read = nullstr_read;
-  str->write = nullstr_write;
+  str->read = 0;
+  str->write = 0;
   return str;
 }
 

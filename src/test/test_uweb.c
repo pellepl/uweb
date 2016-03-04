@@ -52,7 +52,6 @@ static int32_t chstr_write(UW_STREAM str, uint8_t *src, uint32_t len) {
 UW_STREAM make_char_stream(UW_STREAM str, const char *data)
 {
   str->total_sz = strlen(data);
-  str->capacity_sz = 0;
   str->avail_sz = str->total_sz;
   str->user = (void *) data;
   str->read = chstr_read;
@@ -76,7 +75,6 @@ UW_STREAM make_printf_stream(UW_STREAM str)
 {
   _response_buffer_ix = 0;
   str->total_sz = -1;
-  str->capacity_sz = 256;
   str->avail_sz = str->total_sz;
   str->user = 0;
   str->read = prstr_read;
