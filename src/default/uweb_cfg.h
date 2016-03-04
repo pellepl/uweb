@@ -41,7 +41,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define UWEB_MAX_CONTENT_DISP_LEN     256
 #define UWEB_REQ_BUF_MAX_LEN          512
 #define UWEB_ASSERT(x)
-#define UWEB_DBG(...)                 //printf( "[UWEB] "__VA_ARGS__ )
+#define UWEB_DBG(...)                 printf( "[UWEB] "__VA_ARGS__ )
 
 
 #endif /* UWEB_CFG_H_ */

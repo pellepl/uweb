@@ -146,16 +146,38 @@ static uweb_response uweb_response_fn(uweb_request_header *req, UW_STREAM *res, 
 }
 
 static void uweb_data_fn(uweb_request_header *req, uweb_data_type type, uint32_t offset, uint8_t *data, uint32_t length) {
-  printf("got data: ");
-  uint32_t i;
-  for (i = 0; i < length; i++) {
-    printf("%02x", data[i]);
+  printf("DATA ");
+  printf("type:%s  ", type == DATA_CONTENT ? "CONTENT" : (type == DATA_CHUNK ? "CHUNK" : (type == DATA_MULTIPART ? "MULTIPART" : "?")));
+  printf("offset:%6i  length:%6i\n", offset, length);
+  printf("     resource:%s\n     content-type:%s\n", req->resource, req->content_type);
+  if (type == DATA_CONTENT) {
+    printf("     content-length:%i  content-type:%s\n",
+           req->content_length, req->content_type);
+  } else if (type == DATA_CHUNK) {
+    printf("     chunk-nbr:%i  content-length:%i  type:%s\n",
+           req->chunk_nbr, req->content_length, req->content_type);
+  } else if (type == DATA_MULTIPART) {
+    printf("     multipart-nbr:%i  content-disposition:%s\n",
+           req->cur_multipart.multipart_nbr, req->cur_multipart.content_disp);
   }
-  printf("   ");
-  for (i = 0; i < length; i++) {
-    printf("%c", data[i] >= ' ' ? data[i] : '.');
+
+
+  uint32_t i, ix;
+  for (ix = 0; ix < length; ix += 16) {
+    printf("     ");
+    for (i = ix; i < length && i < ix+16; i++) {
+      printf("%02x", data[i]);
+    }
+    if (i < ix+16) {
+      uint32_t j;
+      for (j = 0; j < (ix+16)-i; j++) printf("  ");
+    }
+    printf("   ");
+    for (i = ix; i < length && i < ix+16; i++) {
+      printf("%c", data[i] >= ' ' ? data[i] : '.');
+    }
+    printf("\n");
   }
-  printf("\n");
 }
 
 void start_socket_server(int port) {
@@ -181,8 +203,11 @@ void start_socket_server(int port) {
     return;
   }
 
+  int istrue = 1;
+  setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &istrue, sizeof(int));
+
   // listen
-  listen(sockfd, 2);
+  listen(sockfd, 8);
 
   // accept and incoming connection
   printf("uweb server started @ port %i\n", port);
@@ -213,4 +238,5 @@ void start_socket_server(int port) {
   }
 
   close(sockfd);
+
 }

@@ -97,7 +97,7 @@ static uweb_response uweb_response_fn(uweb_request_header *req, UW_STREAM *res, 
 }
 
 static void uweb_data_fn(uweb_request_header *req, uweb_data_type type, uint32_t offset, uint8_t *data, uint32_t length) {
-#if 0
+#if 1
   printf("#####      DATA TYPE:%i OFFS:%i LENGTH:%i\n"
          "#####           CHUNK:%i CONN:%s CONTENT_TYPE:%s\n"
          "#####           MLTPART #:%i DISP:%s TYPE:%s\n",
@@ -147,12 +147,12 @@ SUITE(uweb_tests)
     UWEB_init(uweb_response_fn, uweb_data_fn);
     UWEB_parse(req_str, pri_str);
     TEST_CHECK_EQ(strcmp(_response_buffer,
-     "HTTP/1.1 200 OK\n"
-     "Server: uWeb\n"
-     "Content-Type: text/html; charset=utf-8\n"
-     "Content-Length: 12\n"
-     "Connection: close\n"
-     "\n"
+     "HTTP/1.1 200 OK\r\n"
+     "Server: uWeb\r\n"
+     "Content-Type: text/html; charset=utf-8\r\n"
+     "Content-Length: 12\r\n"
+     "Connection: close\r\n"
+     "\r\n"
      "Hello world!"), 0);
     return TEST_RES_OK;
   } TEST_END(simple_request)
@@ -167,11 +167,11 @@ SUITE(uweb_tests)
     UWEB_init(uweb_response_fn, uweb_data_fn);
     UWEB_parse(req_str, pri_str);
     TEST_CHECK_EQ(strcmp(_response_buffer,
-     "HTTP/1.1 200 OK\n"
-     "Server: uWeb\n"
-     "Content-Type: text/html; charset=utf-8\n"
-     "Transfer-Encoding: chunked\n"
-     "\n"
+     "HTTP/1.1 200 OK\r\n"
+     "Server: uWeb\r\n"
+     "Content-Type: text/html; charset=utf-8\r\n"
+     "Transfer-Encoding: chunked\r\n"
+     "\r\n"
      "5; chunk 0\r\n"
      "Hello\r\n"
      "5; chunk 1\r\n"
@@ -204,19 +204,19 @@ SUITE(uweb_tests)
   TEST(simple_post_request)
   {
     UW_STREAM req_str = make_char_stream(&stream[0],
-       "POST /foo.php HTTP/1.1\n"
-       "Host: localhost\n"
-       "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5 (.NET CLR 3.5.30729)\n"
-       "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\n"
-       "Accept-Language: en-us,en;q=0.5\n"
-       "Accept-Encoding: gzip,deflate\n"
-       "Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7\n"
-       "Keep-Alive: 300\n"
-       "Connection: keep-alive\n"
-       "Referer: http://localhost/test.php\n"
-       "Content-Type: application/x-www-form-urlencoded\n"
-       "Content-Length: 43\n"
-       "\n"
+       "POST /foo.php HTTP/1.1\r\n"
+       "Host: localhost\r\n"
+       "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5 (.NET CLR 3.5.30729)\r\n"
+       "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n"
+       "Accept-Language: en-us,en;q=0.5\r\n"
+       "Accept-Encoding: gzip,deflate\r\n"
+       "Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7\r\n"
+       "Keep-Alive: 300\r\n"
+       "Connection: keep-alive\r\n"
+       "Referer: http://localhost/test.php\r\n"
+       "Content-Type: application/x-www-form-urlencoded\r\n"
+       "Content-Length: 43\r\n"
+       "\r\n"
        "first_name=John&last_name=Doe&action=Submit"
     );
     UW_STREAM pri_str = make_printf_stream(&stream[1]);
@@ -226,12 +226,12 @@ SUITE(uweb_tests)
     UWEB_parse(req_str, pri_str);
 
     TEST_CHECK_EQ(strcmp(_response_buffer,
-     "HTTP/1.1 200 OK\n"
-     "Server: uWeb\n"
-     "Content-Type: text/html; charset=utf-8\n"
-     "Content-Length: 13\n"
-     "Connection: close\n"
-     "\n"
+     "HTTP/1.1 200 OK\r\n"
+     "Server: uWeb\r\n"
+     "Content-Type: text/html; charset=utf-8\r\n"
+     "Content-Length: 13\r\n"
+     "Connection: close\r\n"
+     "\r\n"
      "Hello world!\n"), 0);
 
     TEST_CHECK_EQ(strcmp(_data_buffer,
@@ -243,32 +243,32 @@ SUITE(uweb_tests)
   TEST(post_multipart_request) {
 
     UW_STREAM req_str = make_char_stream(&stream[0],
-    "POST / HTTP/1.1\n"
-    "Host: localhost:8000\n"
-    "User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:44.0) Gecko/20100101 Firefox/44.0\n"
-    "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\n"
-    "Accept-Language: en-US,en;q=0.5\n"
-    "Accept-Encoding: gzip, deflate\n"
-    "Connection: keep-alive\n"
-    "Content-Type: multipart/form-data; boundary=---------------------------812961605669629873499955133\n"
-    "Content-Length: 465\n"
-    "\n"
-    "-----------------------------812961605669629873499955133\n"
-    "Content-Disposition: form-data; name=\"text1\"\n"
-    "\n"
-    "text default\n"
-    "-----------------------------812961605669629873499955133\n"
-    "Content-Disposition: form-data; name=\"text2\"\n"
-    "\n"
-    "aωb\n"
-    "-----------------------------812961605669629873499955133\n"
-    "Content-Disposition: form-data; name=\"file1\"; filename=\"afile.txt\"\n"
-    "Content-Type: text/plain\n"
-    "\n"
-    "Hello world!\n"
-    "How's it hanging?\n"
-    "\n"
-    "-----------------------------812961605669629873499955133--\n"
+    "POST / HTTP/1.1\r\n"
+    "Host: localhost:8000\r\n"
+    "User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:44.0) Gecko/20100101 Firefox/44.0\r\n"
+    "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n"
+    "Accept-Language: en-US,en;q=0.5\r\n"
+    "Accept-Encoding: gzip, deflate\r\n"
+    "Connection: keep-alive\r\n"
+    "Content-Type: multipart/form-data; boundary=---------------------------812961605669629873499955133\r\n"
+    "Content-Length: 551\r\n"
+    "\r\n"
+    "-----------------------------812961605669629873499955133\r\n"
+    "Content-Disposition: form-data; name=\"text1\"\r\n"
+    "\r\n"
+    "text default"
+    "\r\n-----------------------------812961605669629873499955133\r\n"
+    "Content-Disposition: form-data; name=\"text2\"\r\n"
+    "\r\n"
+    "aωb"
+    "\r\n-----------------------------812961605669629873499955133\r\n"
+    "Content-Disposition: form-data; name=\"file1\"; filename=\"afile.txt\"\r\n"
+    "Content-Type: text/plain\r\n"
+    "\r\n"
+    "Hello world!\r\n"
+    "-----------------------------812961605669629873499955134notaboundary\r\n"
+    "How's it hanging?\r\n"
+    "\r\n-----------------------------812961605669629873499955133--\r\n"
     );
 
     UW_STREAM pri_str = make_printf_stream(&stream[1]);
@@ -277,12 +277,22 @@ SUITE(uweb_tests)
     UWEB_init(uweb_response_fn, uweb_data_fn);
     UWEB_parse(req_str, pri_str);
 
-    TEST_CHECK_EQ(strcmp(_data_buffer,
-      "[form-data; name=\"text1\"]text default\n"
-      "[form-data; name=\"text2\"]aωb\n"
-      "[form-data; name=\"file1\"; filename=\"afile.txt\"]Hello world!\n"
-      "How's it hanging?\n"
-      "\n"), 0);
+    const char *expected = "[form-data; name=\"text1\"]text default"
+        "[form-data; name=\"text2\"]aωb"
+        "[form-data; name=\"file1\"; filename=\"afile.txt\"]Hello world!\r\n"
+        "-----------------------------812961605669629873499955134notaboundary\r\n"
+        "How's it hanging?"
+        "\r\n";
+
+    uint32_t ix;
+    for (ix = 0; ix < _data_buffer_ix-1; ix++) {
+      if ((_data_buffer[ix] & 0xff) != (expected[ix] & 0xff)) {
+        printf("%i != %i @ %i\n", _data_buffer[ix], expected[ix], ix);
+        TEST_CHECK(0);
+        break;
+      }
+    }
+
     return TEST_RES_OK;
   } TEST_END(post_multipart_request)
 
