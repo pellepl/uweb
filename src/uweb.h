@@ -171,6 +171,9 @@ typedef uweb_response (*uweb_response_f)(
 
 /**
  * Called when there is a request containing data to the server.
+ * When the data is ended, this is called with params length and buf begin zero.
+ * This can be useful in e.g. multipart transfers when saving data to file to close
+ * resources.
  * @param req - pointer to the client request
  * @param type - the data type
  * @param offset - offset in received data

@@ -338,6 +338,7 @@ static void _uweb_handle_http_header_line(UW_STREAM out, char *s, uint16_t len, 
 static void _uweb_handle_multi_content_header_line(UW_STREAM out, char *s, uint16_t len, UW_STREAM in) {
   (void)out;
   (void)in;
+  s[len] = 0;
   char *boundary_start;
   if (strstr(s, "--") == s && (boundary_start = strstr(s+2, uweb.multipart_boundary))) {
     // boundary match
@@ -517,6 +518,11 @@ void UWEB_parse(UW_STREAM in, UW_STREAM out) {
         // content data
         if (uweb.received_content_len == uweb.req.content_length) {
           UWEB_DBG("all content received\n");
+          if (uweb.server_data_f) {
+            // report data end
+            uweb.server_data_f(&uweb.req, uweb.state == CONTENT ? DATA_CONTENT : DATA_CHUNK,
+                uweb.received_content_len, 0, 0);
+          }
           _uweb_clear_req(&uweb.req);
         }
       }
@@ -530,8 +536,9 @@ void UWEB_parse(UW_STREAM in, UW_STREAM out) {
       if (res < 1) {
         return;
       }
-//      printf("MULCON_DATA:%02x %c  delim_ix:%i/%i\n",
+//      printf("MULCON_DATA:%02x %c  delim_ix:%i bound_ix:%i/%i\n",
 //             c, c <= ' ' ? '.' : c,
+//                 uweb.multipart_delim,
 //                 uweb.multipart_boundary_ix,  uweb.multipart_boundary_len);
 
       uweb.req_buf[uweb.req_buf_len++] = c;
@@ -548,13 +555,18 @@ void UWEB_parse(UW_STREAM in, UW_STREAM out) {
         if (uweb.multipart_delim >= 6) {
           UWEB_DBG("MULTI-PART-DATA: received full boundary\n");
           uint16_t old_req_buf_len = uweb.req_buf_len;
-
-          // got a boundary, report previous collected data
+          // got a boundary, report previous collected data if any
           if (uweb.req_buf_len - uweb.multipart_boundary_len - 6 > 0 && uweb.server_data_f) {
             uweb.server_data_f(&uweb.req, DATA_MULTIPART, uweb.received_multipart_len,
                 (uint8_t*)uweb.req_buf, uweb.req_buf_len - uweb.multipart_boundary_len - 6);
           }
           uweb.received_multipart_len += uweb.req_buf_len - uweb.multipart_boundary_len - 6;
+
+          if (uweb.server_data_f) {
+            // report data end
+            uweb.server_data_f(&uweb.req, DATA_MULTIPART, uweb.received_multipart_len, 0, 0);
+          }
+
           uweb.req_buf_len = 0;
 
           // reset and continue
@@ -574,7 +586,7 @@ void UWEB_parse(UW_STREAM in, UW_STREAM out) {
           // report eaten data believed to be boundary
           flush_boundary_buf = 1;
         }
-        uweb.multipart_delim = 0;
+        uweb.multipart_delim = c == '\r' ? 1 : 0;
         uweb.multipart_boundary_ix = 0;
       }
 
@@ -594,11 +606,14 @@ void UWEB_parse(UW_STREAM in, UW_STREAM out) {
       }
 
       uweb.received_content_len++;
+
       if (uweb.received_content_len == uweb.req.content_length) {
         if (uweb.req_buf_len > 0 && uweb.server_data_f) {
           // report last bytes if we have not left this state already
           uweb.server_data_f(&uweb.req, DATA_MULTIPART, uweb.received_multipart_len,
               (uint8_t *)uweb.req_buf, uweb.req_buf_len);
+          // report data end
+          uweb.server_data_f(&uweb.req, DATA_MULTIPART, uweb.received_multipart_len + uweb.req_buf_len, 0, 0);
         }
         uweb.received_multipart_len += uweb.req_buf_len;
         UWEB_DBG("all multi content received %i\n", uweb.req.content_length);
