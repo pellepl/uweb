@@ -134,6 +134,16 @@ typedef struct uweb_data_stream_s {
    */
   int32_t avail_sz;
   /**
+   * Read offset in stream, updated automatically when read is called.
+   * Can be modified by user, not used by uweb.
+   */
+  int32_t rd_offs;
+  /**
+   * Write offset in stream, updated automatically when write is called.
+   * Can be modified by user, not used by uweb.
+   */
+  int32_t wr_offs;
+  /**
    * Reads from the stream into given buffer. Returns number of bytes
    * read or negative for error. Make sure implementation updates
    * avail_sz. If set to zero it will be a /dev/null stream.

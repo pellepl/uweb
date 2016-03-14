@@ -85,7 +85,10 @@ static void _uweb_sendf(UW_STREAM out, const char *str, ...) {
   int len = vsprintf((char *)uweb.tx_buf, str, arg_p);
   va_end(arg_p);
 
-  if (out->write) out->write(out, uweb.tx_buf, len);
+  if (out->write) {
+    int wlen = out->write(out, uweb.tx_buf, len);
+    out->wr_offs += wlen;
+  }
 }
 
 // send data to client
@@ -93,7 +96,11 @@ static void _uweb_send_data(UW_STREAM out, UW_STREAM data) {
   while (data->avail_sz > 0) {
     int32_t rlen = UWEB_TX_MAX_LEN < data->avail_sz ? UWEB_TX_MAX_LEN : data->avail_sz;
     rlen = data->read ? data->read(data, uweb.tx_buf, rlen) : 0;
-    if (out->write) out->write(out, uweb.tx_buf, rlen);
+    if (rlen > 0) data->rd_offs += rlen;
+    if (out->write) {
+     int wlen = out->write(out, uweb.tx_buf, rlen);
+     if (wlen > 0) out->wr_offs += rlen;
+    }
   } // while tx
 }
 
@@ -102,7 +109,11 @@ static void _uweb_send_data_fixed(UW_STREAM out, UW_STREAM data, int32_t len) {
     int32_t rlen = UWEB_TX_MAX_LEN < data->avail_sz ? UWEB_TX_MAX_LEN : data->avail_sz;
     rlen = len < rlen ? len : rlen;
     rlen = data->read ? data->read(data, uweb.tx_buf, rlen) : 0;
-    if (out->write) out->write(out, uweb.tx_buf, rlen);
+    if (rlen > 0) data->rd_offs += rlen;
+    if (out->write) {
+      int wlen = out->write(out, uweb.tx_buf, rlen);
+      if (wlen > 0) out->wr_offs += rlen;
+    }
     len -= rlen;
   } // while tx
 }
