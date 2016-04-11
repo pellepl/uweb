@@ -82,7 +82,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 // Request return codes
 typedef enum {
   UWEB_OK = 0,
-  UWEB_CHUNKED
+  UWEB_CHUNKED,
+  UWEB_REDIRECT
 } uweb_response;
 
 // Multipart content metadata
@@ -103,6 +104,9 @@ typedef struct {
   uint8_t chunked;
   uint32_t chunk_nbr;
   uweb_request_multipart cur_multipart;
+  union {
+    const char *redirection_url;
+  };
 } uweb_request_header;
 
 // Data types
@@ -154,6 +158,10 @@ typedef struct uweb_data_stream_s {
    * written or negative for error. If set to zero it will be a /dev/null stream.
    */
   int32_t (* write)(struct uweb_data_stream_s *stream, uint8_t *src, uint32_t len);
+  /**
+   * Flushes and closes. May be null.
+   */
+  void (* close)(struct uweb_data_stream_s *stream);
 } uweb_data_stream;
 
 typedef uweb_data_stream *UW_STREAM;
@@ -204,6 +212,10 @@ void UWEB_timeout(UW_STREAM out);
 /* Call this when there is client request data in stream in.
  * Response will be sent to out stream. */
 void UWEB_parse(UW_STREAM in, UW_STREAM out);
+/* Call in your server_resp_f to redirect to another url via 303.
+ * When returning in response function, simply call
+ * <code>return UWEB_return_redirect(req, "http://anotherurl.com");</code> */
+uweb_response UWEB_return_redirect(uweb_request_header *req, const char *url);
 
 /* Returns a url-decoded version of str */
 char *urlndecode(char *dst, char *str, int num);

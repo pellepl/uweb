@@ -185,6 +185,17 @@ static void _uweb_request(UW_STREAM out, uweb_request_header *req) {
     if (req->method != HEAD) {
       _uweb_send_data(out, response_stream);
     }
+  } else if (res == UWEB_REDIRECT) {
+    // redirect response
+    _uweb_sendf(out,
+      "HTTP/1.1 %i %s\r\n"
+      "Connection: close\r\n"
+      "Location: %s\r\n"
+      "\r\n",
+      UWEB_HTTP_STATUS_NUM[S303_SEE_OTHER], UWEB_HTTP_STATUS_STRING[S303_SEE_OTHER],
+      req->redirection_url ? req->redirection_url : "/"
+    );
+    if (out->close) out->close(out);
   } else if (res == UWEB_CHUNKED) {
     // chunked response
     _uweb_sendf(out,
@@ -420,6 +431,12 @@ static void _uweb_handle_chunk_footer_line(UW_STREAM out, char *s, uint16_t len,
   if (len == 0) { // newline
     _uweb_clear_req(&uweb.req);
   }
+}
+
+// return redirect in response callback function
+uweb_response UWEB_return_redirect(uweb_request_header *req, const char *url) {
+  req->redirection_url = url;
+  return UWEB_REDIRECT;
 }
 
 // http data timeout
