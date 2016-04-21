@@ -1,3 +1,4 @@
 build/
 _tests_*
-
+.cproject
+.project

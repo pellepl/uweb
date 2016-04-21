@@ -122,7 +122,7 @@ static uweb_data_stream stream[8];
 
 SUITE(uweb_tests)
 
-  void setup()
+  static void setup()
   {
     _response_chunk_bytes = 0;
     _response_buffer_ix = 0;
@@ -131,7 +131,7 @@ SUITE(uweb_tests)
     memset(_data_buffer, 0, sizeof(_data_buffer));
   }
 
-  void teardown()
+  static void teardown()
   {
   }
 
@@ -153,7 +153,7 @@ SUITE(uweb_tests)
      "\r\n"
      "Hello world!"), 0);
     return TEST_RES_OK;
-  } TEST_END(simple_request)
+  } TEST_END
 
   TEST(simple_chunk_request)
   {
@@ -178,7 +178,7 @@ SUITE(uweb_tests)
      "d!\r\n"
      "0\r\n\r\n"), 0);
     return TEST_RES_OK;
-  } TEST_END(simple_chunk_request)
+  } TEST_END
 
 
   TEST(simple_request_bad)
@@ -196,7 +196,7 @@ SUITE(uweb_tests)
     TEST_CHECK_EQ((int)(intptr_t)strstr(_response_buffer, "HTTP/1.1 400 Bad Request"),
                   (int)(intptr_t)_response_buffer);
     return TEST_RES_OK;
-  } TEST_END(simple_request_bad)
+  } TEST_END
 
 
   TEST(simple_post_request)
@@ -235,7 +235,7 @@ SUITE(uweb_tests)
     TEST_CHECK_EQ(strcmp(_data_buffer,
                          "first_name=John&last_name=Doe&action=Submit"), 0);
     return TEST_RES_OK;
-  } TEST_END(simple_post_request)
+  } TEST_END
 
 
   TEST(post_multipart_request) {
@@ -292,7 +292,7 @@ SUITE(uweb_tests)
     }
 
     return TEST_RES_OK;
-  } TEST_END(post_multipart_request)
+  } TEST_END
 
 
   TEST(urlnencdec)
@@ -308,7 +308,13 @@ SUITE(uweb_tests)
     TEST_CHECK_EQ(strcmp(dst, "\\/<>\r\nåäö"), 0);
 
     return TEST_RES_OK;
-  } TEST_END(urlnencdec)
+  } TEST_END
 
-
+SUITE_TESTS(uweb_tests)
+  ADD_TEST(simple_request)
+  ADD_TEST(simple_chunk_request)
+  ADD_TEST(simple_request_bad)
+  ADD_TEST(simple_post_request)
+  ADD_TEST(post_multipart_request)
+  ADD_TEST(urlnencdec)
 SUITE_END(uweb_tests)

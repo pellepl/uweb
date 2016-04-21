@@ -1,62 +1,56 @@
 /*
-The MIT License (MIT)
-
-Copyright (c) 2016 Peter Andersson (pelleplutt1976<at>gmail.com)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-the Software, and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+ * testrunner.h
+ *
+ *  Created on: Jun 19, 2013
+ *      Author: petera
+ */
 
 /*
 
+file mysuite.c:
+
 SUITE(mysuite)
 
-void setup(test *t) {}
+static void setup(test *t) {}
 
-void teardown(test *t) {}
+static void teardown(test *t) {}
 
 TEST(mytest) {
   printf("mytest runs now..\n");
   return 0;
-} TEST_END(mytest)
+} TEST_END
 
+SUITE_TESTS(mysuite)
+  ADD_TEST(mytest)
 SUITE_END(mysuite)
 
 
 
+file mysuite2.c:
+
 SUITE(mysuite2)
 
-void setup(test *t) {}
+static void setup(test *t) {}
 
-void teardown(test *t) {}
+static void teardown(test *t) {}
 
 TEST(mytest2a) {
   printf("mytest2a runs now..\n");
   return 0;
-} TEST_END(mytest2a)
+} TEST_END
 
 TEST(mytest2b) {
   printf("mytest2b runs now..\n");
   return 0;
-} TEST_END(mytest2b)
+} TEST_END
 
+SUITE_TESTS(mysuite2)
+  ADD_TEST(mytest2a)
+  ADD_TEST(mytest2b)
 SUITE_END(mysuite2)
 
 
+some other file.c:
 
 void add_suites() {
   ADD_SUITE(mysuite);
@@ -127,26 +121,35 @@ typedef struct test_res_s {
 
 #define str(s) #s
 
-#define SUITE(sui) \
-  extern void __suite_##sui() {
+#define SUITE(sui)
+
+#define SUITE_TESTS(sui) \
+  void _add_suite_tests_##sui(void) {
+
 #define SUITE_END(sui) \
   }
+
+#define ADD_TEST(tf) \
+  _add_test(__test_##tf, str(tf), setup, teardown);
+
 #define ADD_SUITE(sui) \
-  __suite_##sui();
+  extern void _add_suite_tests_##sui(void); \
+  _add_suite_tests_##sui();
+
 #define TEST(tf) \
-  int tf(struct test_s *t) { do
-#define TEST_END(tf) \
+  static int __test_##tf(struct test_s *t) { do
+
+#define TEST_END \
   while(0); \
   __fail_stop: return TEST_RES_FAIL; \
   __fail_assert: return TEST_RES_ASSERT; \
-  } \
-  add_test(tf, str(tf), setup, teardown);
-
+  }
 
 void add_suites();
 void test_init(void (*on_stop)(test *t));
-void add_test(test_f f, char *name, void (*setup)(test *t), void (*teardown)(test *t));
 // returns 0 if all tests ok, -1 if any test failed, -2 on badness
 int run_tests(int argc, char **args);
+void _add_suite(const char *suite_name);
+void _add_test(test_f f, char *name, void (*setup)(test *t), void (*teardown)(test *t));
 
 #endif /* TESTRUNNER_H_ */
