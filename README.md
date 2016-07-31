@@ -1,4 +1,6 @@
 # uweb
+[![Build Status](https://travis-ci.org/pellepl/uweb.svg?branch=master)](https://travis-ci.org/pellepl/uweb)
+
 Mini-kini web server aimed at embedded stuff, HTTP1.1.
 
 MIT license.
